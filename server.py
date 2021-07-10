@@ -7,6 +7,8 @@ from PIL import Image
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 import requests
 import datetime
+import io
+import numpy as np
 
 app=Flask(__name__)
 CORS(app)
@@ -253,16 +255,18 @@ def init_form2():
 def init_form4():
 	msg={}
 	url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/Document_Upload_Form_Report/"
-	field1="selfie_img"
-	field2="pan_card_img"
-	field3="aadhar_frnt_img"
-	field4="aadhar_back_img"
+	field_type_1=["selfie_img","pan_card_img","aadhar_frnt_img","aadhar_back_img"]
+	field_type_2=["doc"+str(i+1) for i in range(20)]
+	all_fields=field_type_1+field_type_2
+	urls={}
 	try:
 		if(request):
 			image_keys=list(request.files.keys());
 			req_files=[]
 			for i in image_keys:
 				req_files.append(request.files[i])
+
+			print(req_files)
 
 			if 'uid' in request.headers:
 
@@ -287,12 +291,24 @@ def init_form4():
 					tok=cred_dict["token"]
 					
 				uid=request.headers['uid']
+				for i,j in enumerate(all_fields):
+					urls["image"+str(i)]=url+uid+"/"+j+"/upload"
+
+					'''
 				urls={
 						"image1":url+uid+"/"+field1+"/upload",
 					  	"image2":url+uid+"/"+field2+"/upload",
 					  	"image3":url+uid+"/"+field3+"/upload",
-						"image4":url+uid+"/"+field4+"/upload"
+						"image4":url+uid+"/"+field4+"/upload",
+						"image5":url+uid+"/"+field5+"/upload",
+						"image6":url+uid+"/"+field6+"/upload",
+						"image7":url+uid+"/"+field7+"/upload",
+						"image8":url+uid+"/"+field8+"/upload",
+						"image9":url+uid+"/"+field9+"/upload",
+						"image10":url+uid+"/"+field10+"/upload"
+
 				}
+				'''
 
 				sorted_urls=[urls[i] for i in image_keys]
 
@@ -303,10 +319,33 @@ def init_form4():
 				header={
 					'Authorization':'Zoho-oauthtoken '+tok
 				}
-				for i in range(len(data_list)):
-					requests.post(sorted_urls[i],files=data_list[i],headers=header)
 
-				msg["success"]="successfully uploaded"
+				'''
+				img=Image.open(req_files[0])
+				img = np.array(img)
+				print(img.shape)
+				img2=img
+				imgg=np.vstack((img,img2))
+				print(imgg.shape)
+				imm=Image.fromarray(imgg,"RGB")
+				buf = io.BytesIO()
+				imm.save(buf, format='JPEG')
+				byte_im = buf.getvalue()
+				r=requests.post(sorted_urls[0],files={"file":byte_im},headers=header)
+				'''
+
+				#imm.save('abc.jpg')
+				#print(imm)
+				#print(imgg.shape)
+
+
+				#for i in range(len(data_list)):
+					#requests.post(sorted_urls[i],files=data_list[i],headers=header)
+				
+
+				#print(json.loads(r.text))
+				#msg["error"]="successfully uploaded"
+
 				#print(msg)
 			else:
 				msg["error"]="no header"
@@ -407,6 +446,363 @@ def test_token():
 		cred_dict=json.load(cred)
 
 	return jsonify({"msg":cred_dict})
+
+
+@app.route('/coappidentification',methods=["POST"])
+@cross_origin(origin='*',supports_credentials=True)
+def init_form_another():
+	msg={}
+	form1_url='https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/form/Customer_Details_Table';
+	form2_url='https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/form/Document_Upload_Form';
+	form3_url='https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details';
+	try:
+		if(request):
+			#print(request.data)
+			req=request.data
+			req=json.loads(req)
+			print(req)
+			with open("cred.json","r") as cred:
+				cred_dict=json.load(cred)
+			d=datetime.datetime.strptime(cred_dict["time"],"%Y-%m-%d %H:%M:%S.%f")
+			updated_time=d+datetime.timedelta(minutes=50)
+			cur_time=datetime.datetime.now()
+			if(cur_time>updated_time):
+				token=reset_token()
+				if "success" in token:
+					tok=token["success"]
+					up_dict={
+						"token":tok,
+						"time":str(cur_time)
+					}
+					with open("cred.json","w") as cred:
+						json.dump(up_dict,cred)
+				else:
+					tok=cred_dict["token"]
+			else:
+				tok=cred_dict["token"]
+
+			if 'uid' in request.headers:
+				uid=request.headers['uid'];
+				postreq=urllib.request.Request("https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/Customer_Details_Table_Report/"+uid,method="PATCH")
+			else:
+				postreq=urllib.request.Request(form1_url,method="POST")
+				postreq1=urllib.request.Request(form2_url,method="POST")
+				postreq2=urllib.request.Request(form3_url,method="PATCH")
+
+			postreq.add_header('Content-Type','application/json')
+			postreq.add_header('Authorization','Zoho-oauthtoken '+tok)
+			req1=json.dumps(req["content1"])
+			req1=req1.encode()
+			#print(req["content1"])
+			r=urllib.request.urlopen(postreq,data=req1)
+			content=r.read()
+			content=json.loads(content)
+			msg["success"]=content
+
+			postreq1.add_header('Content-Type','application/json')
+			postreq1.add_header('Authorization','Zoho-oauthtoken '+tok)
+			r=urllib.request.urlopen(postreq1,data=req1)
+			content=r.read()
+			content=json.loads(content)
+			msg["success1"]=content
+
+			postreq2.add_header('Content-Type','application/json')
+			postreq2.add_header('Authorization','Zoho-oauthtoken '+tok)
+			req2=json.dumps(req["content2"])
+			req2=req2.encode()
+			r=urllib.request.urlopen(postreq2,data=req2)
+			content=r.read()
+			content=json.loads(content)
+			msg["success2"]=content
+		else:
+			msg["error"]="no data"
+	except Exception as e:
+		msg["error"]=str(e)
+
+	return jsonify({"msg":msg})
+
+
+@app.route('/coapppersonal',methods=["POST"])
+@cross_origin(origin='*',supports_credentials=True)
+def init_form_another_another():
+	msg={}
+	form1_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/Customer_Details_Table_Report/"
+	form2_url='https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details';
+	try:
+		if(request):
+			#print(request.data)
+			req=request.data
+			req=json.loads(req)
+			print(req)
+			with open("cred.json","r") as cred:
+				cred_dict=json.load(cred)
+			d=datetime.datetime.strptime(cred_dict["time"],"%Y-%m-%d %H:%M:%S.%f")
+			updated_time=d+datetime.timedelta(minutes=50)
+			cur_time=datetime.datetime.now()
+			if(cur_time>updated_time):
+				token=reset_token()
+				if "success" in token:
+					tok=token["success"]
+					up_dict={
+						"token":tok,
+						"time":str(cur_time)
+					}
+					with open("cred.json","w") as cred:
+						json.dump(up_dict,cred)
+				else:
+					tok=cred_dict["token"]
+			else:
+				tok=cred_dict["token"]
+
+			uid=request.headers['uid'];
+
+			if "dob" in req["content1"]["data"]:
+				date=datetime.datetime.strptime(req["content1"]["data"]["dob"],"%d-%b-%Y")
+				#print(date)
+				if(date>=datetime.datetime.now()):
+					msg["date_err"]="invalid dob"
+					#print(msg)
+					return jsonify({"msg":msg})
+				else:
+					date_gap=datetime.datetime.now()-date
+					if (date_gap.days/365)<18:
+						msg["date_err"]="must be 18 years old"
+						return jsonify({"msg":msg})
+
+			postreq=urllib.request.Request(form1_url+uid,method="PATCH")
+			postreq2=urllib.request.Request(form2_url,method="PATCH")
+
+
+			postreq.add_header('Content-Type','application/json')
+			postreq.add_header('Authorization','Zoho-oauthtoken '+tok)
+			req1=json.dumps(req["content1"])
+			req1=req1.encode()
+			#print(req["content1"])
+			r=urllib.request.urlopen(postreq,data=req1)
+			content=r.read()
+			content=json.loads(content)
+			msg["success"]=content
+
+
+			postreq2.add_header('Content-Type','application/json')
+			postreq2.add_header('Authorization','Zoho-oauthtoken '+tok)
+			req2=json.dumps(req["content2"])
+			req2=req2.encode()
+			r=urllib.request.urlopen(postreq2,data=req2)
+			content=r.read()
+			content=json.loads(content)
+			msg["success2"]=content
+		else:
+			msg["error"]="no data"
+	except Exception as e:
+		msg["error"]=str(e)
+
+	return jsonify({"msg":msg})
+
+
+@app.route('/getUserformcoapp',methods=["GET"])
+@cross_origin(origin='*',supports_credentials=True)
+def getUserform_another():
+	msg={}
+	form1_url='https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/Customer_Details_Table_Report/'
+	form2_url='https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details/'
+	try:
+		if 'uid' in request.headers or 'lid' in request.headers:
+
+			uid=request.headers['uid']
+			lid=request.headers['lid']
+		
+			with open("cred.json","r") as cred:
+				cred_dict=json.load(cred)
+			d=datetime.datetime.strptime(cred_dict["time"],"%Y-%m-%d %H:%M:%S.%f")
+			updated_time=d+datetime.timedelta(minutes=50)
+			cur_time=datetime.datetime.now()
+			if(cur_time>updated_time):
+				token=reset_token()
+				if "success" in token:
+					tok=token["success"]
+					up_dict={
+						"token":tok,
+						"time":str(cur_time)
+					}
+					with open("cred.json","w") as cred:
+						json.dump(up_dict,cred)
+				else:
+					tok=cred_dict["token"]
+			else:
+				tok=cred_dict["token"]
+
+
+
+			postreq=urllib.request.Request(form1_url+"/"+uid,method="GET")
+			postreq.add_header('Content-Type','application/json')
+			postreq.add_header('Authorization','Zoho-oauthtoken '+tok)
+			r=urllib.request.urlopen(postreq)
+			content=r.read()
+			content=json.loads(content)
+			msg["success"]=content
+
+
+			postreq=urllib.request.Request(form2_url+"/"+lid,method="GET")
+			postreq.add_header('Content-Type','application/json')
+			postreq.add_header('Authorization','Zoho-oauthtoken '+tok)
+			r=urllib.request.urlopen(postreq)
+			content=r.read()
+			content=json.loads(content)
+			msg["success2"]=content
+
+			
+			#print(msg)
+		else:
+			msg["error"]="no data"
+	except Exception as e:
+		msg["error"]=str(e)
+
+	return jsonify({"msg":msg})
+
+
+@app.route('/getloandetails',methods=["GET"])
+@cross_origin(origin='*',supports_credentials=True)
+def getUserform_loan():
+	msg={}
+	form2_url='https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details/'
+	try:
+		if 'lid' in request.headers:
+
+			lid=request.headers['lid']
+		
+			with open("cred.json","r") as cred:
+				cred_dict=json.load(cred)
+			d=datetime.datetime.strptime(cred_dict["time"],"%Y-%m-%d %H:%M:%S.%f")
+			updated_time=d+datetime.timedelta(minutes=50)
+			cur_time=datetime.datetime.now()
+			if(cur_time>updated_time):
+				token=reset_token()
+				if "success" in token:
+					tok=token["success"]
+					up_dict={
+						"token":tok,
+						"time":str(cur_time)
+					}
+					with open("cred.json","w") as cred:
+						json.dump(up_dict,cred)
+				else:
+					tok=cred_dict["token"]
+			else:
+				tok=cred_dict["token"]
+
+
+			postreq=urllib.request.Request(form2_url+"/"+lid,method="GET")
+			postreq.add_header('Content-Type','application/json')
+			postreq.add_header('Authorization','Zoho-oauthtoken '+tok)
+			r=urllib.request.urlopen(postreq)
+			content=r.read()
+			content=json.loads(content)
+			msg["success"]=content
+
+			
+			#print(msg)
+		else:
+			msg["error"]="no data"
+	except Exception as e:
+		msg["error"]=str(e)
+
+	return jsonify({"msg":msg})
+
+
+@app.route('/getstatusetails',methods=["GET"])
+@cross_origin(origin='*',supports_credentials=True)
+def getloanStatus():
+	msg={}
+	form2_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?Loan ID=="
+	try:
+		lid=request.headers['id']
+		print(lid)
+		with open("cred.json","r") as cred:
+			cred_dict=json.load(cred)
+		d=datetime.datetime.strptime(cred_dict["time"],"%Y-%m-%d %H:%M:%S.%f")
+		updated_time=d+datetime.timedelta(minutes=50)
+		cur_time=datetime.datetime.now()
+		if(cur_time>updated_time):
+			token=reset_token()
+			if "success" in token:
+				tok=token["success"]
+				up_dict={
+					"token":tok,
+					"time":str(cur_time)
+				}
+				with open("cred.json","w") as cred:
+					json.dump(up_dict,cred)
+			else:
+				tok=cred_dict["token"]
+		else:
+			tok=cred_dict["token"]
+
+		header={
+			'Authorization':'Zoho-oauthtoken '+tok
+		}
+		r=requests.get(form2_url+lid,headers=header)
+		content=json.loads(r.text)
+		msg["success"]=content
+		print(msg)
+
+			
+			#print(msg)
+	except Exception as e:
+		msg["error"]=str(e)
+
+	return jsonify({"msg":msg})
+
+
+@app.route('/getapplicant',methods=["POST"])
+@cross_origin(origin='*',supports_credentials=True)
+def getapplicantData():
+	msg={}
+	form1_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?Loan ID=="
+	form2_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?Applicant Phone="
+	try:
+		req=request.data
+		req=json.loads(req)
+		print(req)
+		with open("cred.json","r") as cred:
+			cred_dict=json.load(cred)
+		d=datetime.datetime.strptime(cred_dict["time"],"%Y-%m-%d %H:%M:%S.%f")
+		updated_time=d+datetime.timedelta(minutes=50)
+		cur_time=datetime.datetime.now()
+		if(cur_time>updated_time):
+			token=reset_token()
+			if "success" in token:
+				tok=token["success"]
+				up_dict={
+					"token":tok,
+					"time":str(cur_time)
+				}
+				with open("cred.json","w") as cred:
+					json.dump(up_dict,cred)
+			else:
+				tok=cred_dict["token"]
+		else:
+			tok=cred_dict["token"]
+
+		header={
+			'Authorization':'Zoho-oauthtoken '+tok
+		}
+		if(req["data"]["lid"]!=""):
+			r=requests.get(form1_url+req["data"]["lid"],headers=header)
+		else:
+			r=requests.get(form2_url+req["data"]["phone"],headers=header)
+		content=json.loads(r.text)
+		msg["success"]=content
+		print(msg)
+
+			
+			#print(msg)
+	except Exception as e:
+		msg["error"]=str(e)
+
+	return jsonify({"msg":msg})
+
+
 
 if __name__=='__main__':
    app.run(host='0.0.0.0',port=5000)
