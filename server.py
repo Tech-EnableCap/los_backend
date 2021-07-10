@@ -261,12 +261,11 @@ def init_form4():
 	urls={}
 	try:
 		if(request):
+			print(request.files)
 			image_keys=list(request.files.keys());
 			req_files=[]
 			for i in image_keys:
 				req_files.append(request.files[i])
-
-			print(req_files)
 
 			if 'uid' in request.headers:
 
@@ -292,23 +291,9 @@ def init_form4():
 					
 				uid=request.headers['uid']
 				for i,j in enumerate(all_fields):
-					urls["image"+str(i)]=url+uid+"/"+j+"/upload"
+					urls["image"+str(i+1)]=url+uid+"/"+j+"/upload"
 
-					'''
-				urls={
-						"image1":url+uid+"/"+field1+"/upload",
-					  	"image2":url+uid+"/"+field2+"/upload",
-					  	"image3":url+uid+"/"+field3+"/upload",
-						"image4":url+uid+"/"+field4+"/upload",
-						"image5":url+uid+"/"+field5+"/upload",
-						"image6":url+uid+"/"+field6+"/upload",
-						"image7":url+uid+"/"+field7+"/upload",
-						"image8":url+uid+"/"+field8+"/upload",
-						"image9":url+uid+"/"+field9+"/upload",
-						"image10":url+uid+"/"+field10+"/upload"
-
-				}
-				'''
+					
 
 				sorted_urls=[urls[i] for i in image_keys]
 
@@ -339,12 +324,12 @@ def init_form4():
 				#print(imgg.shape)
 
 
-				#for i in range(len(data_list)):
-					#requests.post(sorted_urls[i],files=data_list[i],headers=header)
+				for i in range(len(data_list)):
+					requests.post(sorted_urls[i],files=data_list[i],headers=header)
 				
 
 				#print(json.loads(r.text))
-				#msg["error"]="successfully uploaded"
+				msg["success"]="successfully uploaded"
 
 				#print(msg)
 			else:
@@ -805,4 +790,4 @@ def getapplicantData():
 
 
 if __name__=='__main__':
-   app.run(host='0.0.0.0',port=5000)
+   app.run(host='0.0.0.0')

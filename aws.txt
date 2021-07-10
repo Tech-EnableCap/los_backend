@@ -1,0 +1,68 @@
+1. ssh <-
+2. cd \C:\pem_aws <-
+3. ssh -i "los_test.pem" ec2-user@ec2-65-1-107-76.ap-south-1.compute.amazonaws.com <-
+4. chmod 400 los_test.pem <-
+5. mkdir lms <-
+6. cd lms <-
+7. sudo yum install git <-
+8. git clone https://github.com/Tech-EnableCap/lms_back.git <-
+9. sudo pip3 install -r requirement.txt <-
+
+======== fix python errors ======
+
+1. sudo yum install -y mysql-devel <-
+2. sudo yum -y install gcc <-
+3. sudo yum -y install gcc-c++ <-
+4. sudo yum install python3-devel <-
+
+=================================
+
+========== npm install ==========
+
+1. curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash <-
+2. . ~/.nvm/nvm.sh <-
+3. nvm install node <-
+
+=================================
+
+========== install pm2 ==========
+
+1. npm install -g pm2 <-
+
+=================================
+
+** sh.deploy <-
+
+======== install frontend ========
+
+1. sudo systemctl start nginx <-
+2. git clone https://github.com/Tech-EnableCap/lms_front.git <-
+
+==================================
+
+
+========= configure nginx =======
+
+1. amazon-linux-extras install nginx1.12 <-
+2. sudo systemctl start nginx
+3. cd lms_front <-
+4. cd /var
+5. sudo mkdir www <-
+6. cd www <-
+7. sudo mkdir lms_front <-
+8. cd ~/lms/lms_front <-
+
+## sh.deploy <-
+
+9. cd /etc/nginx <-
+10. sudo vi nginx.conf <-
+11. sudo systemctl restart nginx <-
+
+=================================
+
+
+
+
+
+
+
