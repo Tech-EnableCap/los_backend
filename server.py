@@ -699,7 +699,7 @@ def getUserform_loan():
 @cross_origin(origin='*',supports_credentials=True)
 def getloanStatus():
 	msg={}
-	form2_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?Loan ID=="
+	form2_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?lid="
 	try:
 		lid=request.headers['id']
 		print(lid)
@@ -743,8 +743,8 @@ def getloanStatus():
 @cross_origin(origin='*',supports_credentials=True)
 def getapplicantData():
 	msg={}
-	form1_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?Loan ID=="
-	form2_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?Applicant Phone="
+	form1_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?lid="
+	form2_url="https://creator.zoho.in/api/v2/tech_enablecap/enablecap-loan-origination-system/report/All_Loan_Details?Applicant_Phone="
 	try:
 		req=request.data
 		req=json.loads(req)
